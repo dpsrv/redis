@@ -8,8 +8,10 @@ services:
     ports:
       - '6379/tcp'
     volumes:
+      - ${DPSRV_HOME}/rc/secrets/redis/redis.conf:/etc/redis.conf
       - ${DPSRV_HOME}/rc/secrets/letsencrypt/:/etc/letsencrypt/:ro
       - /etc/localtime:/etc/localtime:ro
+    command: [ 'redis-server', '/etc/redis.conf' ]
     restart: unless-stopped
 networks:
   default:
