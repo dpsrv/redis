@@ -1,0 +1,19 @@
+services:
+  dpsrv-redis:
+    container_name: dpsrv-redis-${tag:-latest}
+    image: redis:7.2.4-alpine
+    env_file:
+      - ${DPSRV_HOME}/rc/secrets/redis/redis.env
+      - ${DPSRV_HOME}/rc/secrets/local/${HOSTNAME}/local.env
+    ports:
+      - '6379/tcp'
+    volumes:
+      - ${DPSRV_HOME}/rc/secrets/letsencrypt/:/etc/letsencrypt/:ro
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+networks:
+  default:
+    name: dpsrv
+    external: true
+volumes:
+  db:
