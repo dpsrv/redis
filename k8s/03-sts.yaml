@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: dpsrv
+  name: redis
+spec:
+  serviceName: redis
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      nodeSelector:
+        DPSRV_REGION: cnt-use1
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+        - name: redis
+          image: redis:8.2.1-alpine
+          ports:
+            - name: redis
+              containerPort: 6379
+            - name: sentinel
+              containerPort: 26379
+          envFrom:
+            - configMapRef:
+                name: dpsrv
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-ri-redis-password
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              HOSTNAME=$(hostname)
+              if [ "$HOSTNAME" = "redis-0" ]; then
+                echo "Starting as master"
+                redis-server \
+                  --port 6379 \
+                  --save "" \
+                  --appendonly no \
+                  --requirepass "$REDIS_PASSWORD" \
+                  --protected-mode no &
+              else
+                echo "Starting as replica"
+                redis-server \
+                  --port 6379 \
+                  --save "" \
+                  --appendonly no \
+                  --requirepass "$REDIS_PASSWORD" \
+                  --replicaof redis-0.redis 6379 \
+                  --masterauth "$REDIS_PASSWORD" \
+                  --protected-mode no &
+              fi
+
+              # Start sentinel
+              cat > /tmp/sentinel.conf <<EOF
+              port 26379
+              sentinel monitor mymaster redis-0.redis 6379 2
+              sentinel auth-pass mymaster $REDIS_PASSWORD
+              sentinel down-after-milliseconds mymaster 5000
+              sentinel failover-timeout mymaster 10000
+              sentinel parallel-syncs mymaster 1
+              EOF
+
+              exec redis-sentinel /tmp/sentinel.conf
+
+      enableServiceLinks: false
+      imagePullSecrets:
+        - name: dockerhub-dpsrv
+      securityContext:
+        #runAsUser: 999
+        #runAsGroup: 999
+        #fsGroup: 999
+
