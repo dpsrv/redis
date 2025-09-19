@@ -18,6 +18,30 @@ spec:
           image: redislabs/redisinsight:2.70.1
           ports:
             - containerPort: 5540
+          env:
+            - name: DEBUG
+              value: "api:*,db:*,redis-client:*"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-ri-redis-password 
+                  key: redis-ri-redis-password 
+            - name: REDISINSIGHT__CONNECTIONS
+              value: |
+                [
+                  {
+                    "name": "Redis",
+                    "connectionType": "SENTINEL",
+                    "sentinelMaster": {
+                      "name": "mymaster"
+                    },
+                    "sentinelEndpoints": [
+                      { "host": "redis", "port": 26379 }
+                    ],
+                    "password": "${REDIS_PASSWORD:-}"
+                  }
+                ]
+
           resources:
             requests:
               cpu: "100m"
