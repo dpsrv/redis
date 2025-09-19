@@ -38,19 +38,20 @@ spec:
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: redis-secret
+                  name: redis-ri-redis-password
                   key: redis-ri-redis-password
           command: ["/bin/sh", "-c"]
           args:
             - |
+              set -x
               HOSTNAME=$(hostname)
-              if [ "$HOSTNAME" = "redis-0" ]; then
+              if [ "${HOSTNAME:-}" = "redis-0" ]; then
                 echo "Starting as master"
                 redis-server \
                   --port 6379 \
                   --save "" \
                   --appendonly no \
-                  --requirepass "$REDIS_PASSWORD" \
+                  --requirepass "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
               else
                 echo "Starting as replica"
@@ -58,17 +59,18 @@ spec:
                   --port 6379 \
                   --save "" \
                   --appendonly no \
-                  --requirepass "$REDIS_PASSWORD" \
+                  --requirepass "${REDIS_PASSWORD:-}" \
                   --replicaof redis-0.redis 6379 \
-                  --masterauth "$REDIS_PASSWORD" \
+                  --masterauth "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
               fi
 
               # Start sentinel
               cat > /tmp/sentinel.conf <<EOF
               port 26379
-              sentinel monitor mymaster redis-0.redis 6379 2
-              sentinel auth-pass mymaster $REDIS_PASSWORD
+              sentinel resolve-hostnames yes
+              sentinel monitor mymaster redis-0 6379 2
+              sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
               sentinel down-after-milliseconds mymaster 5000
               sentinel failover-timeout mymaster 10000
               sentinel parallel-syncs mymaster 1
