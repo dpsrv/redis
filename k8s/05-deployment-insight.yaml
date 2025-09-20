@@ -24,26 +24,23 @@ spec:
           env:
             - name: DEBUG
               value: "*,-follow-redirects*"
-            - name: REDIS_PASSWORD
+            - name: RI_REDIS_ALIAS
+              value: dpsrv
+            - name: RI_REDIS_HOST
+              value: redis-0.redis.dpsrv.svc.cluster.local
+            - name: RI_REDIS_PORT
+              value: '6379'
+            - name: RI_DATABASE_MANAGEMENT
+              value: 'false'
+            - name: RI_LOG_LEVEL
+              value: debug
+            - name: RI_FILES_LOGGER
+              value: 'false'
+            - name: RI_REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: redis-ri-redis-password 
                   key: redis-ri-redis-password 
-            - name: REDISINSIGHT__CONNECTIONS
-              value: |
-                [
-                  {
-                    "name": "Redis",
-                    "connectionType": "SENTINEL",
-                    "sentinelMaster": {
-                      "name": "mymaster"
-                    },
-                    "sentinelEndpoints": [
-                      { "host": "redis", "port": 26379 }
-                    ],
-                    "password": "${REDIS_PASSWORD:-}"
-                  }
-                ]
 
           #resources:
             #requests:
