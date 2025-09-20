@@ -11,5 +11,5 @@ spec:
   rules:
     - from:
         - source:
-            ipBlocks: ["96.239.100.73/32"]
+            ipBlocks: ["96.57.226.10/32"]
 
