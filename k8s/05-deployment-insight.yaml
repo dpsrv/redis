@@ -23,7 +23,7 @@ spec:
             - containerPort: 5540
           env:
             - name: DEBUG
-              value: "api:*,db:*,redis-client:*"
+              value: "*,-follow-redirects*"
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:

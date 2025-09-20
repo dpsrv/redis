@@ -15,4 +15,4 @@ spec:
         - destination:
             host: redisinsight.dpsrv.svc.cluster.local
             port:
-              number: 3000
+              number: 5540
