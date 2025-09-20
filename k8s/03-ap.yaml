@@ -1,7 +1,7 @@
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: redisinsight-allow-ip
+  name: redisinsight-allow-ips
   namespace: dpsrv
 spec:
   selector:
