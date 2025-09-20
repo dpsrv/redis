@@ -2,14 +2,16 @@ apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: redisinsight-allow-ips
-  namespace: dpsrv
+  namespace: istio-system
 spec:
   selector:
     matchLabels:
-      app: redisinsight
+      istio: ingressgateway
   action: ALLOW
   rules:
-    - from:
+    - to:
+        - operation:
+            hosts: ["redis.dpsrv.me"]
+      from:
         - source:
             ipBlocks: ["96.239.100.73/32"]
-
