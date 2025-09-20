@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  namespace: dpsrv
+  name: redisinsight
+spec:
+  hosts:
+    - redis.dpsrv.me
+  gateways:
+    - istio-system/default
+  http:
+    - match:
+        - port: 443
+      route:
+        - destination:
+            host: redisinsight.dpsrv.svc.cluster.local
+            port:
+              number: 3000
