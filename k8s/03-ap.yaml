@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: redisinsight-allow-ip
+  namespace: dpsrv
+spec:
+  selector:
+    matchLabels:
+      app: redisinsight
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            ipBlocks: ["96.239.100.73/32"]
+
