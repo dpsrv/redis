@@ -12,7 +12,8 @@ spec:
   template:
     metadata:
       annotations:
-        traffic.sidecar.istio.io/excludeInboundPorts: "6379"
+        traffic.sidecar.istio.io/excludeInboundPorts: "6379,26379"
+        traffic.sidecar.istio.io/excludeOutboundPorts: "6379,26379"
       labels:
         app: redis
     spec:
