@@ -45,6 +45,8 @@ spec:
             - |
               set -x
               HOSTNAME=$(hostname)
+              REDIS_CLUSTER_IP=$(getent hosts redis|awk '{ print $1 }')
+
               if [ "${HOSTNAME:-}" = "redis-0" ]; then
                 echo "Starting as master"
                 redis-server \
@@ -60,24 +62,24 @@ spec:
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
-                  --replicaof redis-0.redis 6379 \
+                  --replicaof $REDIS_CLUSTER_IP 6379 \
                   --masterauth "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
               fi
 
               # Start sentinel
-              REDIS_IP=$(getent hosts redis|awk '{ print $1 }')
               cat > /tmp/sentinel.conf <<EOF
               port 26379
               sentinel resolve-hostnames yes
-              sentinel announce-ip ${REDIS_IP:-}
-              sentinel monitor mymaster redis-0.redis 6379 2
+              sentinel announce-ip ${REDIS_CLUSTER_IP:-}
+              sentinel monitor mymaster ${REDIS_CLUSTER_IP:-} 6379 2
               sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
               sentinel down-after-milliseconds mymaster 5000
               sentinel failover-timeout mymaster 10000
               sentinel parallel-syncs mymaster 1
               EOF
 
+              cat /tmp/sentinel.conf
               exec redis-sentinel /tmp/sentinel.conf
 
       enableServiceLinks: false
