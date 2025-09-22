@@ -62,7 +62,7 @@ spec:
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
-                  --replicaof $REDIS_CLUSTER_IP 6379 \
+                  --replicaof ${REDIS_CLUSTER_IP:-} 6379 \
                   --masterauth "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
               fi
@@ -70,8 +70,9 @@ spec:
               # Start sentinel
               cat > /tmp/sentinel.conf <<EOF
               port 26379
+              requirepass ${REDIS_PASSWORD:-}
               sentinel resolve-hostnames yes
-              sentinel announce-ip ${REDIS_CLUSTER_IP:-}
+              sentinel announce-ip $(hostname -i)
               sentinel monitor mymaster ${REDIS_CLUSTER_IP:-} 6379 2
               sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
               sentinel down-after-milliseconds mymaster 5000
@@ -80,7 +81,9 @@ spec:
               EOF
 
               cat /tmp/sentinel.conf
-              exec redis-sentinel /tmp/sentinel.conf
+              redis-sentinel /tmp/sentinel.conf &
+
+              wait
 
       enableServiceLinks: false
       imagePullSecrets:
