@@ -69,6 +69,7 @@ spec:
               cat > /tmp/sentinel.conf <<EOF
               port 26379
               sentinel resolve-hostnames yes
+              sentinel announce-ip redis
               sentinel monitor mymaster redis-0.redis 6379 2
               sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
               sentinel down-after-milliseconds mymaster 5000
