@@ -54,6 +54,7 @@ spec:
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
+                  --masterauth "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
               else
                 echo "Starting as replica"
@@ -62,8 +63,8 @@ spec:
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
-                  --replicaof ${REDIS_CLUSTER_IP:-} 6379 \
                   --masterauth "${REDIS_PASSWORD:-}" \
+                  --replicaof ${REDIS_CLUSTER_IP:-} 6379 \
                   --protected-mode no &
               fi
 
