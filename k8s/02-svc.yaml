@@ -21,10 +21,9 @@ metadata:
   namespace: dpsrv
 spec:
   type: ClusterIP
+  selector:
+    app: redisinsight
   ports:
     - port: 5540
       targetPort: 5540
       protocol: TCP
-  selector:
-    app: redisinsight
-
