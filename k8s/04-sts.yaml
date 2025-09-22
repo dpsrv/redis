@@ -11,6 +11,9 @@ spec:
       app: redis
   template:
     metadata:
+      annotations:
+        # Exclude Redis port from Istio sidecar interception
+        traffic.sidecar.istio.io/excludeInboundPorts: "6379"
       labels:
         app: redis
     spec:
@@ -49,24 +52,36 @@ spec:
 
               if [ "${HOSTNAME:-}" = "redis-0" ]; then
                 echo "Starting as master"
+
                 redis-server \
                   --port 6379 \
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
-                  --masterauth "${REDIS_PASSWORD:-}" \
                   --protected-mode no &
+
               else
                 echo "Starting as replica"
+
+                until redis-cli -h redis-0.redis.dpsrv.svc.cluster.local -p 6379 -a "${REDIS_PASSWORD:-}" PING; do
+                  echo "Waiting for master redis..."
+                  sleep 1
+                done
+
                 redis-server \
                   --port 6379 \
                   --save "" \
                   --appendonly no \
                   --requirepass "${REDIS_PASSWORD:-}" \
                   --masterauth "${REDIS_PASSWORD:-}" \
-                  --replicaof ${REDIS_CLUSTER_IP:-} 6379 \
+                  --replicaof redis-0.redis.dpsrv.svc.cluster.local 6379 \
                   --protected-mode no &
               fi
+
+              until redis-cli -h localhost -p 6379 -a "${REDIS_PASSWORD:-}" PING; do
+                echo "Waiting for local redis..."
+                sleep 1
+              done
 
               # Start sentinel
               cat > /tmp/sentinel.conf <<EOF
@@ -74,7 +89,7 @@ spec:
               requirepass ${REDIS_PASSWORD:-}
               sentinel resolve-hostnames yes
               sentinel announce-ip $(hostname -i)
-              sentinel monitor mymaster ${REDIS_CLUSTER_IP:-} 6379 2
+              sentinel monitor mymaster redis-0.redis.dpsrv.svc.cluster.local 6379 2
               sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
               sentinel sentinel-user default
               sentinel sentinel-pass ${REDIS_PASSWORD:-}
@@ -84,9 +99,7 @@ spec:
               EOF
 
               cat /tmp/sentinel.conf
-              redis-sentinel /tmp/sentinel.conf &
-
-              wait
+              exec redis-sentinel /tmp/sentinel.conf 
 
       enableServiceLinks: false
       imagePullSecrets:
