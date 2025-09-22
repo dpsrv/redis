@@ -76,6 +76,8 @@ spec:
               sentinel announce-ip $(hostname -i)
               sentinel monitor mymaster ${REDIS_CLUSTER_IP:-} 6379 2
               sentinel auth-pass mymaster ${REDIS_PASSWORD:-}
+              sentinel sentinel-user default
+              sentinel sentinel-pass ${REDIS_PASSWORD:-}
               sentinel down-after-milliseconds mymaster 5000
               sentinel failover-timeout mymaster 10000
               sentinel parallel-syncs mymaster 1
